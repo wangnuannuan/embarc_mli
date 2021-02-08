@@ -102,17 +102,35 @@ static MLI_FORCE_INLINE void mli_krn_pool_hwc_nopad(
                                                     + ch_idx;
 
             for (int H_idx = row_beg; H_idx < row_end; H_idx++) {
-                for (int W_idx = clmn_beg; W_idx < clmn_end; W_idx++) {
-                if (type == AVEPOOL) {
-                    mli::krn::compute_avepool<io_T, fixed_kernel_size, /*varying_kernel*/ false>(
-                                                in_ptr, out_ptr, mul, kernel_width, kernel_height,
-                                                in.col_mem_stride, in.row_mem_stride, zp, shift_value, 
-                                                current_ch);
-                } else if (type == MAXPOOL) {
-                    mli::krn::reduce_max2D_hwc<io_T, fixed_kernel_size, /*varying_kernel*/ false>(
-                                                in_ptr, out_ptr, kernel_width, kernel_height, 
-                                                in.col_mem_stride, in.row_mem_stride, current_ch);
+                int W_idx = clmn_beg;
+                if ((clmn_end & 0x1) == 1) {
+                    if (type == AVEPOOL) {
+                        mli::krn::compute_avepool<io_T, fixed_kernel_size, /*varying_kernel*/ false>(
+                                                    in_ptr, out_ptr, mul, kernel_width, kernel_height,
+                                                    in.col_mem_stride, in.row_mem_stride, zp, shift_value,
+                                                    current_ch);
+                    } else if (type == MAXPOOL) {
+                        mli::krn::reduce_max2D_hwc<io_T, fixed_kernel_size, /*varying_kernel*/ false>(
+                                                    in_ptr, out_ptr, kernel_width, kernel_height,
+                                                    in.col_mem_stride, in.row_mem_stride, current_ch);
+                    }
+
+                    in_ptr += in_col_inc;
+                    out_ptr += out_col_inc;
+                    W_idx +=1;
                 }
+                #pragma clang loop unroll_count(2)
+                for (; W_idx < clmn_end; W_idx++) {
+                    if (type == AVEPOOL) {
+                        mli::krn::compute_avepool<io_T, fixed_kernel_size, /*varying_kernel*/ false>(
+                                                    in_ptr, out_ptr, mul, kernel_width, kernel_height,
+                                                    in.col_mem_stride, in.row_mem_stride, zp, shift_value,
+                                                    current_ch);
+                    } else if (type == MAXPOOL) {
+                        mli::krn::reduce_max2D_hwc<io_T, fixed_kernel_size, /*varying_kernel*/ false>(
+                                                    in_ptr, out_ptr, kernel_width, kernel_height,
+                                                    in.col_mem_stride, in.row_mem_stride, current_ch);
+                    }
 
                     in_ptr += in_col_inc;
                     out_ptr += out_col_inc;

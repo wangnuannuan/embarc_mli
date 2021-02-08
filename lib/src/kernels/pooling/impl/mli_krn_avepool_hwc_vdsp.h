@@ -50,16 +50,20 @@ static MLI_FORCE_INLINE void compute_avepool_func(
         const int channels)
 {
     vNx2accint_t accu = mli_prv_init_accu_with_bias_v<vNx2accint_t>(zp, shift_value);
+
 #if (__Xvec_guard_bit_option == 0) && !defined(MLI_BUILD_REFERENCE) && defined(__Xvec_width)
     int accum_shift_amout = 0;
     vNx2int_t res = mli::krn::reduce_sum2D_v(in, mul, accu, width, height, 
-		                                col_mem_stride, row_mem_stride, &accum_shift_amout);
+                                        col_mem_stride, row_mem_stride, &accum_shift_amout);
 
     mli_prv_clip_and_store_output_v(out, res, shift_value - accum_shift_amout, channels);
 #else
+    int32_t round = (1 << shift_value) >> 1;
+    accu = mli_math_add(accu , (vNx2int_t)round);
     accu = mli::krn::reduce_sum2D_v(in, mul, accu, width, height, col_mem_stride, row_mem_stride);
     
-    mli_prv_clip_and_store_output_v(out, accu, shift_value, channels);
+    vNx2short_t out_short = mli_math_acc_cast_fx<vNx2short_t, vNx2accint_t,/*round = */ false>(accu, shift_value);
+    mli_prv_store_n_samples(out, out_short, channels);
 #endif
 }
 
