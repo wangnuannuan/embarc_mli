@@ -22,7 +22,7 @@
 
 namespace mli {
 namespace krn {
-#if !defined(MLI_BUILD_REFERENCE) && defined(__Xvec_width)
+#if 0//!defined(MLI_BUILD_REFERENCE) && defined(__Xvec_width)
 using mli::krn::vdsp::mli_krn_softmax_run;
 using mli::krn::vdsp::mli_krn_softmax_fx_run;
 using mli::krn::vdsp::mli_krn_softmax_sa8_run;
@@ -50,7 +50,7 @@ using mli::krn::ref::mli_krn_softmax_sa8_run;
 
 #include "impl/mli_krn_softmax_ref.h"
 
-#if !defined(MLI_BUILD_REFERENCE) && defined(__Xvec_width)
+#if 0//!defined(MLI_BUILD_REFERENCE) && defined(__Xvec_width)
 #include "impl/mli_krn_softmax_vdsp.h"
 
 #elif !defined(MLI_BUILD_REFERENCE) && defined(__FXAPI__)

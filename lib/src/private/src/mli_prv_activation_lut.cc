@@ -22,7 +22,7 @@ using mli::krn::activation_lut;
     out_format = Q15
     out_error  = 0.000191 (6 lsb) (linear interpolation)
 */
-static const MLI_CCM_ATT int16_t sigmoid_lut_data_fx16[] = {
+static const int16_t sigmoid_lut_data_fx16[] = {
         +0,     +0,     +1,     +1,     +1,     +1,     +1,     +1,     +1,     +1,     +1,     +2,     +2,     +2,
         +2,     +3,     +3,     +4,     +4,     +5,     +5,     +6,     +7,     +8,     +9,     +10,    +11,    +12,
         +14,    +16,    +18,    +21,    +23,    +26,    +30,    +34,    +38,    +43,    +49,    +56,    +63,    +72,
@@ -56,7 +56,7 @@ const mli_lut sigmoid_lut_fx16 = {
     out_format = Q15
     out_error  = 0.000377 (12 lsb) (linear interpolation)
 */
-static const MLI_CCM_ATT int16_t tanh_lut_data_fx16[] = {
+static const int16_t tanh_lut_data_fx16[] = {
         -32767, -32767, -32767, -32767, -32766, -32766, -32766, -32766, -32765, -32765, -32765, -32764, -32764, -32763,
         -32762, -32762, -32761, -32760, -32759, -32758, -32756, -32755, -32753, -32751, -32749, -32746, -32743, -32740,
         -32736, -32732, -32727, -32721, -32715, -32708, -32700, -32691, -32681, -32670, -32657, -32642, -32625, -32606,
@@ -89,7 +89,7 @@ const mli_lut tanh_lut_fx16 = {
     out_format = Q15
     out_error  = 0.000463 (15 lsb) (linear interpolation)
 */
-static const MLI_CCM_ATT int16_t expneg_lut_data_fx16[] = {
+static const int16_t expneg_lut_data_fx16[] = {
         +0,     +0,     +1,     +1,     +1,     +1,     +1,     +1,     +1,     +1,     +1,     +1,     +1,     +1,
         +1,     +1,     +1,     +1,     +1,     +1,     +2,     +2,     +2,     +2,     +2,     +2,     +2,     +2,
         +3,     +3,     +3,     +3,     +3,     +4,     +4,     +4,     +4,     +5,     +5,     +5,     +6,     +6,

@@ -24,7 +24,7 @@
 
 namespace mli {
 namespace krn {
-#if !defined(MLI_BUILD_REFERENCE) && defined(__Xvec_width)
+#if 0//!defined(MLI_BUILD_REFERENCE) && defined(__Xvec_width)
 using mli::krn::vdsp::compute_activation_lut;
 using mli::krn::vdsp::activation_lut_vec_elem_interpolate;
 using mli::krn::vdsp::activation_lut_vec_elem_no_interpolate;
@@ -59,7 +59,7 @@ using mli::krn::ref::activation_lut_one_elem_no_interpolate;
 
 #include "impl/mli_prv_lut_ref.h"
 
-#if !defined(MLI_BUILD_REFERENCE) && defined(__Xvec_width)
+#if 0//!defined(MLI_BUILD_REFERENCE) && defined(__Xvec_width)
 #include "impl/mli_prv_lut_vdsp.h"
 #endif
 
