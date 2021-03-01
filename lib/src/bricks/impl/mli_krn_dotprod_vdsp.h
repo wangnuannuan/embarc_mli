@@ -678,8 +678,10 @@ static MLI_FORCE_INLINE acc_T dotprod3D_v_nopad_gather1 (
     for (int ch = 0; ch < channels; ch++) {
         // gather load w x h samples from input
         auto in_gather = mli_prv_gather_load_nx2_samples(in, vindex, width * height);
-#pragma clang loop unroll(full)
+//#pragma clang loop unroll(full)
         // with nopad version row and col loop can be combined.
+#pragma clang loop pipeline(enable)
+#pragma clang loop pipeline_options(0x10)
         for (int idx = 0; idx < height * width; idx++) {
             // get input sample from gather vector.
             in_T input = in_gather[idx];
@@ -726,8 +728,10 @@ static MLI_FORCE_INLINE grpacc_T dotprod3D_v_nopad_gather1_unroll (
     for (int ch = 0; ch < channels; ch++) {
         // gather load w x h samples from input
         auto in_gather = mli_prv_gather_load_nx2_samples(in, vindex, width * height * unroll);
-#pragma clang loop unroll(full)
+//#pragma clang loop unroll(full)
         // with nopad version row and col loop can be combined.
+#pragma clang loop pipeline(enable)
+#pragma clang loop pipeline_options(0x10)
         for (int idx = 0; idx < height * width; idx++) {
             // get input sample from gather vector.
             in_T input = in_gather[idx];
