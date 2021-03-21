@@ -40,8 +40,9 @@ static inline void rnn_dense_op(
         int remaining_ch = out_elements - o_idx;
         int current_chs = MIN(remaining_ch, num_lanes); // number of channels computed in this loop iteration
 
-        acc_T accu = mli_math_mul_fx<io_T, acc_T>(0, 0);
-        acc_T prev_step = mli_math_mul_fx<io_T, acc_T>(0, 0);
+        acc_T accu_zero = mli_math_mul_fx<io_T, acc_T>(0, 0);
+        acc_T accu = accu_zero;
+        acc_T prev_step = accu_zero;
 
         auto output_params = adjust_quant_params_v(&in_to_out_quant_params[0], 0);
         accu = mli::krn::bias_additive(&bias[o_idx], accu, &output_params, /* add_preshift_rnd */ false);
@@ -57,7 +58,7 @@ static inline void rnn_dense_op(
                 mli::krn::ref::adjust_quant_params(&in_to_out_quant_params[idx], o_idx);
                 prev_step = mli::krn::ir_rnn_result_requantize(accu, &in_to_out_quant_params[idx],
                                 &in_to_out_quant_params[idx + 1], /* krn_idx= */ 0);
-                accu = mli_math_mul_fx<io_T, acc_T>(0, 0);
+                accu = accu_zero;
             } else {
                 // Cast result to output type with scaling
                 mli::krn::result_cast_relu_store_v(&out[o_idx], accu, &output_params,
