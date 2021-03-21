@@ -80,7 +80,8 @@ MLI_FORCE_INLINE T mli_math_asr_rnd_fx(T x, int nbits)
     // Rounding up:
     // if the most significant deleted bit is 1, add 1 to the remaining bits.
 #ifdef ROUND_UP
-    T round = (T)((1u << nbits) >> 1);
+    T one = 1u;
+    T round = (T)((one << nbits) >> 1);
     r = mli_math_add_fx<T>(x, round);
     r = mli_math_asr_fx<T>(r, nbits);
 #endif
