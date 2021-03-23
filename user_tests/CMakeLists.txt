@@ -190,9 +190,9 @@ add_user_test(krn data_movement)
 add_user_test(krn conv2d)
 add_user_test(krn depthwise_conv)
 add_user_test(krn transpose_conv2d)
-add_user_test(krn group_conv2d FX16)
-add_user_test(krn group_conv2d FX16_FX8_FX8)
-add_user_test(krn group_conv2d SA8_SA8_SA32)
+# add_user_test(krn group_conv2d FX16)
+# add_user_test(krn group_conv2d FX16_FX8_FX8)
+# add_user_test(krn group_conv2d SA8_SA8_SA32)
 
 #======================================================
 # Pooling Group
