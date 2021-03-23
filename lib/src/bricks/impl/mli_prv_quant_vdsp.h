@@ -508,7 +508,7 @@ MLI_FORCE_INLINE vNx4accshort_t ir_rnn_result_requantize(
     int mul_norm = mli_math_norm_fx<int32_t, int32_t>(mul);
     int32_t mul_shifted = mul << mul_norm;
 
-    vNx4int_t acc_int = to_vNx4int_t(mli_math_acc_cast_fx<vNx4short_t, vNx4accshort_t>(acc));
+    vNx4int_t acc_int = to_vNx4int_t(acc);
     vNx4int_t acc_norm = mli_math_norm_fx<vNx4int_t, vNx4int_t>(acc_int);
     acc_int = mli_math_asl_fx<vNx4int_t, vNx4int_t>(acc_int, acc_norm);
 
@@ -522,8 +522,17 @@ MLI_FORCE_INLINE vNx4accshort_t ir_rnn_result_requantize(
     vNx4int_t acc_shifted = mli_math_asr_rnd_fx(acc_scaled, shift_right);
     acc_shifted = mli_math_asl_fx(acc_shifted, shift_left);
 
+#if (__Xvec_guard_bit_option == 0)
     vNx4short_t acc_short = mli_math_cast_fx<vNx4int_t, vNx4short_t>(acc_shifted);
     vNx4accshort_t res = mli_math_init_accu_add<vNx4short_t, vNx4accshort_t>(acc_short, (vNx4short_t)0);
+#else
+    vNx4int_t norm;
+    vNx4short_t acc_short = mli_math_norm_cast_fx</*left_shift*/ false>(acc_shifted , &norm);
+    norm = mli_math_min_fx(norm, 8);
+    vNx4accshort_t res = mli_math_init_accu_add<vNx4short_t, vNx4accshort_t>(acc_short, (vNx4short_t)0);
+    res = mli_math_asl_fx<vNx4accshort_t, vNx4short_t>(res, to_vNx4short_t(norm));
+#endif
+
     return res;
 }
 
