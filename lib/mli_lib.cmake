@@ -42,7 +42,6 @@ set(MLI_LIB_SOURCE_FILES
     ${MLI_LIB_CMAKE_DIR}/src/kernels/convolution/mli_krn_conv2d_hwcn.cc
     ${MLI_LIB_CMAKE_DIR}/src/kernels/convolution/mli_krn_transpose_conv2d_hwcn.cc
     ${MLI_LIB_CMAKE_DIR}/src/kernels/convolution/mli_krn_depthwise_conv2d_hwcn.cc
-    ${MLI_LIB_CMAKE_DIR}/src/kernels/convolution/mli_krn_group_conv2d_hwcn.cc
     ${MLI_LIB_CMAKE_DIR}/src/kernels/common/mli_krn_fully_connected.cc
     ${MLI_LIB_CMAKE_DIR}/src/kernels/common/mli_krn_rnn_dense.cc
     ${MLI_LIB_CMAKE_DIR}/src/kernels/diverse/mli_krn_argmax.cc
