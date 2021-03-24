@@ -528,9 +528,16 @@ MLI_FORCE_INLINE vNx4accshort_t ir_rnn_result_requantize(
 #else
     vNx4int_t norm;
     vNx4short_t acc_short = mli_math_norm_cast_fx</*left_shift*/ false>(acc_shifted , &norm);
+
+    vNx4int_t mask = (1 << norm) - 1;
+    acc_shifted &= mask;
+    vNx4int_t mask_shift = mli_math_max_fx(norm - 8, 0);
+    acc_shifted = mli_math_asr_fx(acc_shifted, mask_shift);
+
     norm = mli_math_min_fx(norm, 8);
     vNx4accshort_t res = mli_math_init_accu_add<vNx4short_t, vNx4accshort_t>(acc_short, (vNx4short_t)0);
     res = mli_math_asl_fx<vNx4accshort_t, vNx4short_t>(res, to_vNx4short_t(norm));
+    res = mli_math_add(res, to_vNx4short_t(acc_shifted));
 #endif
 
     return res;
