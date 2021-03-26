@@ -56,8 +56,8 @@ struct rnn_dense_test_operands {
 
 const crc32_calc test_1_chksum_fx16{ 0x67A28725 }, test_1_chksum_fx16_fx8_fx8{ 0x39090878 }, test_1_chksum_sa8{ 0x622840E9 },
                  test_2_chksum_fx16{ 0x67A28725 }, test_2_chksum_fx16_fx8_fx8{ 0x39090878 }, test_2_chksum_sa8{ 0x622840E9 },
-                 test_3_chksum_fx16{ 0x159AD436 }, test_3_chksum_fx16_fx8_fx8{ 0x5918457A }, test_3_chksum_sa8{ 0xC18BB563 },
-                 test_4_chksum_fx16{ 0x159AD436 }, test_4_chksum_fx16_fx8_fx8{ 0x5918457A }, test_4_chksum_sa8{ 0xC18BB563 },
+                 test_3_chksum_fx16{ 0xDEC60793 }, test_3_chksum_fx16_fx8_fx8{ 0x5918457A }, test_3_chksum_sa8{ 0xC18BB563 },
+                 test_4_chksum_fx16{ 0xDEC60793 }, test_4_chksum_fx16_fx8_fx8{ 0x5918457A }, test_4_chksum_sa8{ 0xC18BB563 },
                  test_5_chksum_fx16{ 0x484FA14F }, test_5_chksum_fx16_fx8_fx8{ 0x9A6277F1 }, test_5_chksum_sa8{ 0x12A21BAD },
                  test_6_chksum_fx16{ 0x484FA14F }, test_6_chksum_fx16_fx8_fx8{ 0x9A6277F1 }, test_6_chksum_sa8{ 0x12A21BAD };
 #else // Not defined CRC_*

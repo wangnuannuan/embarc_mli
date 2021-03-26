@@ -203,15 +203,22 @@ MLI_FORCE_INLINE void result_cast_relu_store(
         const int16_t val_max_limit);
 #endif
 
-template <typename acc_T, typename quant_T>
-MLI_FORCE_INLINE acc_T ir_rnn_result_requantize(const acc_T acc, const quant_T* current_params, 
-                                                        const quant_T* next_params, int krn_idx);
-template <typename acc_T>
-MLI_FORCE_INLINE acc_T ir_rnn_result_requantize(const acc_T acc, const fx_quant_specific_params* params,
-                                                        const fx_quant_specific_params* next_params, int krn_idx);
+template <typename o_T, typename acc_T, typename quant_T>
+MLI_FORCE_INLINE o_T ir_result_cast(const acc_T acc, const quant_T* quant_params);
 template <>
-MLI_FORCE_INLINE mli_acc32_t ir_rnn_result_requantize(const mli_acc32_t acc, const s8asym_quant_specific_params* params,
-                                                        const s8asym_quant_specific_params* next_params, int krn_idx);
+MLI_FORCE_INLINE int16_t ir_result_cast(const mli_acc40_t acc, const fx_quant_specific_params* math_params);
+template <>
+MLI_FORCE_INLINE int16_t ir_result_cast(const mli_acc32_t acc, const fx_quant_specific_params* math_params);
+template <>
+MLI_FORCE_INLINE int8_t ir_result_cast(const mli_acc32_t acc, const s8asym_quant_specific_params* quant_params);
+
+template <typename acc_T, typename quant_T>
+MLI_FORCE_INLINE acc_T ir_rnn_result_requantize(const acc_T acc, const quant_T* params, int krn_idx);
+template <typename acc_T>
+MLI_FORCE_INLINE acc_T ir_rnn_result_requantize(const acc_T acc, const fx_quant_specific_params* params, int krn_idx);
+template <>
+MLI_FORCE_INLINE mli_acc32_t ir_rnn_result_requantize(
+		const mli_acc32_t acc, const s8asym_quant_specific_params* params, int krn_idx);
 
 template <typename in_T, typename out_T>
 MLI_FORCE_INLINE out_T mli_prv_convert_sa8_fx16(
@@ -391,19 +398,17 @@ MLI_FORCE_INLINE void result_cast_relu_store_v(
 
 template <typename acc_T, typename quant_T>
 MLI_FORCE_INLINE acc_T ir_rnn_result_requantize(
-        const acc_T acc, const quant_T* current_params,
-        const quant_T* next_params, int krn_idx);
+        const acc_T acc, const quant_T* params, int krn_idx);
 template <typename acc_T>
 MLI_FORCE_INLINE acc_T ir_rnn_result_requantize(
-        const acc_T acc, const fx_quant_specific_params* params,
-        const fx_quant_specific_params* next_params, int krn_idx);
+        const acc_T acc, const fx_quant_specific_params* params, int krn_idx);
 
 #if defined(__Xvec_width)
 template <>
 MLI_FORCE_INLINE vNx4accshort_t ir_rnn_result_requantize(
         const vNx4accshort_t acc,
         const s8asym_quant_specific_params* params,
-        const s8asym_quant_specific_params* next_params, int krn_idx);
+		int krn_idx);
 #endif
 
 //==========================================================================

@@ -485,9 +485,11 @@ MLI_FORCE_INLINE void result_cast_relu_store_v(
 }
 
 template <typename acc_T>
-MLI_FORCE_INLINE acc_T ir_rnn_result_requantize(const acc_T acc, const fx_quant_specific_params* current_params,
-                                                const fx_quant_specific_params* next_params, int krn_idx) {
-    const int shift = current_params->out_shift - next_params->out_shift;
+MLI_FORCE_INLINE acc_T ir_rnn_result_requantize(
+		const acc_T acc,
+		const fx_quant_specific_params* params,
+        int krn_idx) {
+    const int shift = params->out_shift;
     int shift_right = MAX(shift, 0);
     int shift_left = MAX(-shift, 0);
     acc_T acc_shifted = mli_math_asl_fx(acc, shift_left);
@@ -497,13 +499,13 @@ MLI_FORCE_INLINE acc_T ir_rnn_result_requantize(const acc_T acc, const fx_quant_
 template <>
 MLI_FORCE_INLINE vNx4accshort_t ir_rnn_result_requantize(
         const vNx4accshort_t acc,
-        const s8asym_quant_specific_params* current_params,
-        const s8asym_quant_specific_params* next_params, int krn_idx) {
+        const s8asym_quant_specific_params* params,
+        int krn_idx) {
 
     MLI_ASSERT(krn_idx == 0);
 
-    const int32_t mul = current_params->out_mul / next_params->weight_scales[0];
-    const int shift = current_params->out_shift - next_params->weight_shifts[0];
+    const int32_t mul = params->out_mul;
+    const int shift = params->out_shift;
 
     int mul_norm = mli_math_norm_fx<int32_t, int32_t>(mul);
     int32_t mul_shifted = mul << mul_norm;

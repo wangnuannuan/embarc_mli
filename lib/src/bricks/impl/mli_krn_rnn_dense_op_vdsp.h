@@ -78,8 +78,7 @@ static inline void rnn_dense_op(
 
             if(inputs_num - idx != 1) {
                 mli::krn::ref::adjust_quant_params(&in_to_out_quant_params[idx], o_idx);
-                prev_step = mli::krn::ir_rnn_result_requantize(accu, &in_to_out_quant_params[idx],
-                                &in_to_out_quant_params[idx + 1], /* krn_idx= */ 0);
+                prev_step = mli::krn::ir_rnn_result_requantize(accu, &in_to_out_quant_params[idx], /* krn_idx= */ 0);
                 accu = mli_prv_init_accu<acc_T>();
             } else {
                 // Cast result to output type with scaling
