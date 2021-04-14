@@ -275,21 +275,21 @@ int main() {
         bool is_test_passed = true;
         const hlp_convert_test_operands* cur_test = &tests_list[i];
 
-// #if PLATFORM == V2DSP_XY
-//         if (strstr(cur_test->descr, "Test SA32 --> SA32") != nullptr) {
-//             // EMxD vectorized code doesn't work properly with
-//             // SA32 --> SA32 conversion in CONVERGENT rounding mode.
-//             reporter.report_message(cur_test->descr, "SKIPPED due to a known issue");
-//             continue;
-//         }
+#if PLATFORM == V2DSP_XY
+        if (strstr(cur_test->descr, "Test SA32 --> SA32") != nullptr) {
+            // EMxD vectorized code doesn't work properly with
+            // SA32 --> SA32 conversion in CONVERGENT rounding mode.
+            reporter.report_message(cur_test->descr, "SKIPPED due to a known issue");
+            continue;
+        }
 
-//         if (strstr(cur_test->descr, "Test FX16 --> FX16") != nullptr) {
-//             // EMxD vectorized code doesn't work properly with
-//             // FX16 --> FX16 conversion in CONVERGENT rounding mode.
-//             reporter.report_message(cur_test->descr, "SKIPPED due to a known issue");
-//             continue;
-//         }
-// #endif
+        if (strstr(cur_test->descr, "Test FX16 --> FX16") != nullptr) {
+            // EMxD vectorized code doesn't work properly with
+            // FX16 --> FX16 conversion in CONVERGENT rounding mode.
+            reporter.report_message(cur_test->descr, "SKIPPED due to a known issue");
+            continue;
+        }
+#endif
         is_test_passed = run_test(mli_hlp_convert_tensor, reporter, cur_test);
 
         if (is_test_passed &&
