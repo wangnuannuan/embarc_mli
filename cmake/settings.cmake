@@ -51,6 +51,10 @@ if (ARC)
         list(APPEND MLI_PLATFORM_FLAGS
             -g
         )
+    else()
+        list(APPEND MLI_PLATFORM_COMPILE_OPTIONS
+            -Wno-pass-failed
+        )
     endif()
 
     if (NOT DEFINED OPTMODE)

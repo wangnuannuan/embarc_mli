@@ -12,13 +12,19 @@ ifneq ($(ComSpec)$(COMSPEC),)
 	RM=del /F /Q
 	RMDIR=rmdir /Q /S
 	MKDIR=mkdir
+	CP=copy /Y
+	CPR=xcopy /I /E /Y
 	PS=$(BACKSLASH)
+	fix_platform_path = $(subst /,$(PS), $(1))
 else
 	O_SYS=Linux
 	RM=rm -rf
 	RMDIR=rm -rf
 	MKDIR=mkdir -p
+	CP=cp
+	CPR= cp -r
 	PS=/
+	fix_platform_path=$(1)
 endif
 
 ifeq ($(MLI_BUILD_REFERENCE),ON)
