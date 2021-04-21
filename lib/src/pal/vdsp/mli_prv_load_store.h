@@ -256,12 +256,27 @@ static MLI_FORCE_INLINE void mli_prv_store_n_samples(MLI_OUT_PTR (int8_t)  out, 
     *(MLI_OUT_PTR (vNx4char_t)) out = data;
 }
 
+static MLI_FORCE_INLINE void mli_prv_store_n_samples(MLI_OUT_PTR (int8_t)  out, vNx4short_t data) {
+    vvst_db(data.lo, (int8_t __vccm *)(out));
+    vvst_db(data.hi, (int8_t __vccm *)(out + _VDSP_NUM_16BIT_LANES));
+}
+
 static MLI_FORCE_INLINE void mli_prv_store_n_samples(MLI_OUT_PTR (int16_t)  out, vNx4short_t data) {
     *(MLI_OUT_PTR (vNx4short_t)) out = data;
 }
 
 static MLI_FORCE_INLINE void mli_prv_store_n_samples(MLI_OUT_PTR (int16_t)  out, vNx2short_t data) {
     *(MLI_OUT_PTR (vNx2short_t)) out = data;
+}
+
+static MLI_FORCE_INLINE void mli_prv_store_n_samples(MLI_OUT_PTR (int16_t)  out, vNx2int_t data) {
+    vvst_dh(data.lo, (int16_t __vccm *)(out));
+    vvst_dh(data.hi, (int16_t __vccm *)(out + _VDSP_NUM_32BIT_LANES));
+}
+
+static MLI_FORCE_INLINE void mli_prv_store_n_samples(MLI_OUT_PTR (int16_t)  out, vNx4int_t data) {
+    mli_prv_store_n_samples(out, data.lo);
+    mli_prv_store_n_samples(out + 2 * _VDSP_NUM_32BIT_LANES, data.hi);
 }
 
 static MLI_FORCE_INLINE void mli_prv_store_n_samples(MLI_OUT_PTR (int32_t)  out, vNint_t data) {
@@ -283,6 +298,14 @@ static MLI_FORCE_INLINE void mli_prv_store_n_samples(MLI_OUT_PTR (int8_t)  out,
         vNx4char_t data, int predicate_limit) {
     pvNx4 predicate = mli_prv_pvNx4_init(predicate_limit);
     vvst(data, predicate, (int8_t __vccm *)(out));
+}
+
+static MLI_FORCE_INLINE void mli_prv_store_n_samples(MLI_OUT_PTR (int8_t)  out,
+        vNx4short_t data, int predicate_limit) {
+    pvNx2 p0 = mli_prv_pvNx2_init(predicate_limit);
+    vvst_db(data.lo, p0, (int8_t __vccm *)(out));
+    pvNx2 p1 = mli_prv_pvNx2_init(predicate_limit - _VDSP_NUM_16BIT_LANES);
+    vvst_db(data.hi, p1, (int8_t __vccm *)(out + _VDSP_NUM_16BIT_LANES));
 }
 
 static MLI_FORCE_INLINE void mli_prv_store_n_samples(MLI_OUT_PTR (int16_t)  out,

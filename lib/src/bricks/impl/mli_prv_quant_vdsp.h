@@ -275,6 +275,17 @@ MLI_FORCE_INLINE vNx4accshort_t bias_additive(
     vNx4char_t bias_v = mli_prv_load_nx4_samples(bias);
     vNx4accshort_t accu = mli_math_mul_fx<vNx4char_t, vNx4accshort_t>(bias_v, 1);
     accu = mli_math_asl_fx(accu, quant_params->bias_shift);
+    if (add_preshift_rnd) {
+        // adding the rounding for the output shift already here at the bias in order to take this add out of the innerloop
+#ifdef ROUND_UP
+        // adding 1 << (shift-1)
+        // shift twice to prevent negative shift if nbits = 0
+        accu = mli_math_add(accu, (int16_t)((1 << quant_params->out_shift) >> 1));
+#endif
+#ifdef ROUND_CONVERGENT
+#error "Convergent rounding not supported"
+#endif
+    }
     return accu;
 }
 
@@ -286,6 +297,17 @@ MLI_FORCE_INLINE vNx2accint_t bias_additive(
     vNx2short_t bias_v = mli_prv_load_nx2_samples(bias);
     vNx2accint_t accu = mli_math_mul_fx<vNx2short_t, vNx2accint_t>(bias_v, 1);
     accu = mli_math_asl_fx(accu, quant_params->bias_shift);
+    if (add_preshift_rnd) {
+        // adding the rounding for the output shift already here at the bias in order to take this add out of the innerloop
+#ifdef ROUND_UP
+        // adding 1 << (shift-1)
+        // shift twice to prevent negative shift if nbits = 0
+        accu = mli_math_add(accu, (int32_t)((1 << quant_params->out_shift) >> 1));
+#endif
+#ifdef ROUND_CONVERGENT
+#error "Convergent rounding not supported"
+#endif
+    }
     return accu;
 }
 
@@ -297,6 +319,17 @@ MLI_FORCE_INLINE vNx4accint_t bias_additive(
     vNx4char_t bias_v = mli_prv_load_nx4_samples(bias);
     vNx4accint_t accu = mli_math_mul_fx<vNx4short_t, vNx4accint_t>(to_vNx4short_t(bias_v), 1);
     accu = mli_math_asl_fx(accu, quant_params->bias_shift);
+    if (add_preshift_rnd) {
+        // adding the rounding for the output shift already here at the bias in order to take this add out of the innerloop
+#ifdef ROUND_UP
+        // adding 1 << (shift-1)
+        // shift twice to prevent negative shift if nbits = 0
+        accu = mli_math_add(accu, (int32_t)((1 << quant_params->out_shift) >> 1));
+#endif
+#ifdef ROUND_CONVERGENT
+#error "Convergent rounding not supported"
+#endif
+    }
     return accu;
 }
 
@@ -317,7 +350,7 @@ MLI_FORCE_INLINE vNx4short_t mli_prv_convert_sa8_fx16(
         const vNx4short_t in_val,
         const int16_t zero_point,
         const int16_t scale,
-		const int shift) {
+        const int shift) {
     int shift_right = mli_math_max_fx(shift, 0);
     int shift_left = mli_math_max_fx(-shift, 0);
     vNx4short_t in_biased_shifted_no_zp = mli_math_sub_fx<vNx4short_t>(in_val, zero_point);
@@ -412,16 +445,23 @@ MLI_FORCE_INLINE void result_cast_relu_store_v(
     accu_result = mli_math_asl_fx(accu_result, shift_left);
     vNx4short_t accu_scaled = mli_math_mul_fx_high(accu_result, quant_params->out_mul);
     vNx4short_t shift_right = mli_math_max_fx(shift, 1);
+#ifdef ROUND_UP
+    // shift twice to prevent negative shift if nbits = 0
+    accu_scaled = mli_math_add_fx(accu_scaled,
+                                  (vNx4short_t)((1 << shift_right) >> 1) + (quant_params->out_offset << shift_right));
+    accu_scaled = mli_math_asr_fx(accu_scaled, shift_right);
+#else
     accu_scaled = mli_math_asr_rnd_fx(accu_scaled, shift_right);
+    accu_scaled = accu_scaled + quant_params->out_offset;
+#endif
 
 #else
     vNx4int_t accu_result = to_vNx4int_t(acc);
     vNx4int_t accu_scaled = mli_math_mul_fx_high(accu_result, to_vNx4int_t(quant_params->out_mul)<<16);
     vNx4int_t shift = to_vNx4int_t(quant_params->out_shift);
     accu_scaled = mli_math_asr_rnd_fx(accu_scaled, shift);
-#endif
-
     accu_scaled = accu_scaled + quant_params->out_offset;
+#endif
 
     accu_scaled = mli_math_min_fx(accu_scaled, val_max_limit);
     accu_scaled = mli_math_max_fx(accu_scaled, val_min_limit);
@@ -439,9 +479,12 @@ MLI_FORCE_INLINE void result_cast_relu_store_v(
         const int16_t val_max_limit,
         int num,
         bool add_preshift_rnd) {
-
-    vNx4char_t out = mli_math_acc_cast_fx<vNx4char_t, vNx4accshort_t>(acc, quant_params->out_shift);
-
+    vNx4char_t out;
+    if (add_preshift_rnd) {
+        out = mli_math_acc_cast_fx<vNx4char_t, vNx4accshort_t>(acc, quant_params->out_shift);
+    } else {
+        out = mli_math_acc_cast_fx<vNx4char_t, vNx4accshort_t, /*round = */ false>(acc, quant_params->out_shift);
+    }
     out = mli_math_min_fx(out, val_max_limit);
     out = mli_math_max_fx(out, val_min_limit);
 
@@ -457,8 +500,12 @@ MLI_FORCE_INLINE void result_cast_relu_store_v(
         const int16_t val_max_limit,
         int num,
         bool add_preshift_rnd) {
-
-    vNx2short_t out = mli_math_acc_cast_fx<vNx2short_t, vNx2accint_t>(acc, quant_params->out_shift);
+    vNx2short_t out;
+    if (add_preshift_rnd) {
+        out = mli_math_acc_cast_fx<vNx2short_t, vNx2accint_t>(acc, quant_params->out_shift);
+    } else {
+        out = mli_math_acc_cast_fx<vNx2short_t, vNx2accint_t, /*round = */ false>(acc, quant_params->out_shift);
+    }
 
     out = mli_math_min_fx(out, val_max_limit);
     out = mli_math_max_fx(out, val_min_limit);
@@ -475,8 +522,12 @@ MLI_FORCE_INLINE void result_cast_relu_store_v(
         const int16_t val_max_limit,
         int num,
         bool add_preshift_rnd) {
-
-    vNx4short_t out = mli_math_acc_cast_fx<vNx4short_t, vNx4accint_t>(acc, quant_params->out_shift);
+    vNx4short_t out;
+    if (add_preshift_rnd) {
+        out = mli_math_acc_cast_fx<vNx4short_t, vNx4accint_t>(acc, quant_params->out_shift);
+    } else {
+        out = mli_math_acc_cast_fx<vNx4short_t, vNx4accint_t, /*round = */ false>(acc, quant_params->out_shift);
+    }
 
     out = mli_math_min_fx(out, val_max_limit);
     out = mli_math_max_fx(out, val_min_limit);

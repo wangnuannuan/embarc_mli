@@ -67,12 +67,12 @@ MLI_FORCE_INLINE void inner_product(
         auto output_params = adjust_quant_params_v(&quant_params, o_idx);
 
         acc_T accu = mli_math_mul_fx<io_T, acc_T>(0, 0);
-        accu = mli::krn::bias_additive(&biases[o_idx], accu, &output_params); // bias has to be first in optimized code.
+        accu = mli::krn::bias_additive(&biases[o_idx], accu, &output_params, /*add round = */false); // bias has to be first in optimized code.
 
         accu = dotprod_inputzp_1D_v(in, &weights[o_idx], accu, in_elements, 1, w_ch_out_mem_stride, &quant_params);
 
         // Cast result to output type with scaling
-        mli::krn::result_cast_relu_store_v(&out[o_idx], accu, &output_params, val_min_limit, val_max_limit, current_chs);
+        mli::krn::result_cast_relu_store_v(&out[o_idx], accu, &output_params, val_min_limit, val_max_limit, current_chs, /*add round = */true);
     }
 }
 
