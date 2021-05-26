@@ -47,7 +47,7 @@ struct leaky_relu_test_operands {
 #if defined(CRC_RM_CONVERGENT) || defined(CRC_RM_UP)
 
 // Shared CRC Results
-const crc32_calc  test_1_chksum_fx16{ 0x7695FBF8 }, test_1_chksum_sa8{ 0x97AACEC4 },
+const crc32_calc  test_1_chksum_fx16{ 0x7695FBF8 }, test_1_chksum_sa8{ 0xB3DF81DF },
                   test_2_chksum_fx16{ 0x0E245804 }, test_2_chksum_sa8{ 0x6A2A3EB5 },
                   test_3_chksum_fx16{ 0xB4A6991D }, test_3_chksum_sa8{ 0x6FEF833F };
 

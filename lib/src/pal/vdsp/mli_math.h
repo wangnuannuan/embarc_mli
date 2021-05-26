@@ -539,7 +539,7 @@ MLI_FORCE_INLINE vNx4accshort_t mli_math_asr_rnd_fx(vNx4accshort_t x, vNx4short_
 #ifdef ROUND_UP
     // adding 1 << (nbits-1)
     // shift twice to prevent negative shift if nbits = 0
-    r = mli_math_add<vNx4accshort_t, vNx4short_t>(x, (vNx4short_t)((1 << nbits) >> 1));
+    r = mli_math_add<vNx4accshort_t, vNx4short_t>(x, (vNx4short_t)(((vNx4ushort_t)1 << nbits) >> 1));
 #endif
 #ifdef ROUND_CONVERGENT
 #error "Convergent rounding not supported"
@@ -1933,6 +1933,11 @@ MLI_FORCE_INLINE vNx2accint_t mli_math_mac_su_fx(vNx2accint_t acc, vNx2short_t L
 
 template <>
 MLI_FORCE_INLINE vNx4accshort_t mli_math_mac_su_fx(vNx4accshort_t acc, vNx4char_t L, uint8_t R) {
+    return vvcmac_su(acc, L, R);
+}
+
+template <>
+MLI_FORCE_INLINE vNx4accshort_t mli_math_mac_su_fx(vNx4accshort_t acc, vNx4char_t L, vNx4uchar_t R) {
     return vvcmac_su(acc, L, R);
 }
 

@@ -109,8 +109,10 @@ static MLI_FORCE_INLINE vNx4char_t calc_leaky_relu(
         const s8asym_quant_params *alpha_params) {
     /* Load Input */
     vNx4char_t input = mli_prv_load_1vec(vec_in);
-    vNx4short_t input_cast = mli_math_cast_fx<vNx4char_t, vNx4short_t>(input);
     pvNx4 select = init_predicate(input >= in_zp);
+
+#if (__Xvec_guard_bit_option == 0) && !defined(MLI_BUILD_REFERENCE) && defined(__Xvec_width)
+    vNx4short_t input_cast = mli_math_cast_fx<vNx4char_t, vNx4short_t>(input);
 
     int identity_shift = identity_params->shift;
     vNx4int_t input_identity_scale = mli_math_mul_fx<vNx4short_t, vNx4int_t>(input_cast, identity_params->scale);
@@ -125,7 +127,33 @@ static MLI_FORCE_INLINE vNx4char_t calc_leaky_relu(
               input_alpha_scale = mli_math_add_fx(input_alpha_scale, (vNx4int_t)alpha_params->offset);
     
     vNx4char_t output_alpha = mli_math_cast_fx<vNx4int_t, vNx4char_t>(input_alpha_scale);
+
     return mli_math_select_fx(select, output_identity, output_alpha);
+#else
+    int identity_shift = identity_params->shift;
+    int16_t identity_scale = identity_params->scale;
+    uint8_t identity_scale_lo = identity_scale & 0xFF;
+    int8_t identity_scale_hi = identity_scale >> 8;
+    vNx4accshort_t identity_acc = mli_math_mul_fx<vNx4char_t, vNx4accshort_t>(input, identity_scale_hi);
+                   identity_acc = mli_math_asl_fx(identity_acc, 8);
+                   identity_acc = mli_math_mac_su_fx(identity_acc, input, identity_scale_lo);
+                   identity_acc = mli_math_asr_rnd_fx(identity_acc, identity_shift);
+                   identity_acc = mli_math_add(identity_acc, (vNx4short_t)identity_params->offset);
+    vNx4char_t output_identity = mli_math_acc_cast_fx<vNx4char_t ,vNx4accshort_t>(identity_acc);
+
+    int alpha_shift = alpha_params->shift;
+    int16_t alpha_scale = alpha_params->scale;
+    uint8_t alpha_scale_lo = alpha_scale & 0xFF;
+    int8_t alpha_scale_hi = alpha_scale >> 8;
+    vNx4accshort_t alpha_acc = mli_math_mul_fx<vNx4char_t, vNx4accshort_t>(input, alpha_scale_hi);
+                   alpha_acc = mli_math_asl_fx(alpha_acc, 8);
+                   alpha_acc = mli_math_mac_su_fx(alpha_acc, input, alpha_scale_lo);
+                   alpha_acc = mli_math_asr_rnd_fx(alpha_acc, alpha_shift);
+                   alpha_acc = mli_math_add(alpha_acc, (vNx4short_t)alpha_params->offset);
+    vNx4char_t output_alpha = mli_math_acc_cast_fx<vNx4char_t ,vNx4accshort_t>(alpha_acc);
+
+    return mli_math_select_fx(select, output_identity, output_alpha);
+#endif
 }
 
 static MLI_FORCE_INLINE void compute_leaky_relu(
@@ -170,7 +198,11 @@ static MLI_FORCE_INLINE void compute_leaky_relu_sa8_inner_loop(
         vec_out += remaining_part;
     }
 
+#if (__Xvec_guard_bit_option == 0) && !defined(MLI_BUILD_REFERENCE) && defined(__Xvec_width)
 #pragma clang loop unroll_count(2)
+#else
+#pragma clang loop unroll_count(4)
+#endif
     for (int pos3 = remaining_part; pos3 < count; pos3 += num_lanes) {
         compute_leaky_relu(vec_in, vec_out, in_zp, identity_params, alpha_params);
         vec_in  += num_lanes;
