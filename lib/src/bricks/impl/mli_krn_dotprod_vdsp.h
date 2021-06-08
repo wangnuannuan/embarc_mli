@@ -701,9 +701,8 @@ static MLI_FORCE_INLINE grpacc_T dotprod3D_v_unroll (
    */
     int num_loads_single_gather = _VDSP_NUM_16BIT_LANES;
     int required_loads = (width + unroll - 1) * height;
-    MLI_ASSERT(in_unroll_step == in_col_step);
 
-    if (required_loads <= num_loads_single_gather) {
+    if (fixed_size && (required_loads <= num_loads_single_gather)) {
         return dotprod3D_v_pad_gather1_unroll<in_T, w_T, grpacc_T, unroll>(in, krn, width, height, channels, in_col_step, in_row_step, in_ch_step, kern_col_step, kern_row_step, kern_ch_step, accu);
     } else if (fixed_size && (required_loads <= 2 * num_loads_single_gather)) {
         return dotprod3D_v_pad_gather2_unroll<in_T, w_T, grpacc_T, unroll>(in, krn, width, height, channels, in_col_step, in_row_step, in_ch_step, kern_col_step, kern_row_step, kern_ch_step, accu);
