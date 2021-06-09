@@ -443,7 +443,14 @@ MLI_FORCE_INLINE void result_cast_relu_store_v(
         int num,
         bool add_preshift_rnd) {
 
-    vNx4char_t out = mli_math_acc_cast_fx<vNx4char_t, vNx4accshort_t>(acc, quant_params->out_shift);
+    constexpr int max_acc_bits = 23;
+    constexpr int max_int16_shift = 15;
+    int max_shift = mli_math_min_fx(quant_params->out_shift, max_acc_bits);
+    int shift1 = mli_math_max_fx(max_shift - max_int16_shift, 0);
+    int shift2 = max_shift - shift1;
+
+    acc = mli_math_asr_fx(acc, shift1);
+    vNx4char_t out = mli_math_acc_cast_fx<vNx4char_t, vNx4accshort_t>(acc, shift2);
 
     out = mli_math_min_fx(out, val_max_limit);
     out = mli_math_max_fx(out, val_min_limit);
@@ -461,7 +468,14 @@ MLI_FORCE_INLINE void result_cast_relu_store_v(
         int num,
         bool add_preshift_rnd) {
 
-    vNx2short_t out = mli_math_acc_cast_fx<vNx2short_t, vNx2accint_t>(acc, quant_params->out_shift);
+    constexpr int max_acc_bits = 39;
+    constexpr int max_int_shift = 31;
+    int max_shift = mli_math_min_fx(quant_params->out_shift, max_acc_bits);
+    int shift1 = mli_math_max_fx(max_shift - max_int_shift, 0);
+    int shift2 = max_shift - shift1;
+
+    acc = mli_math_asr_fx(acc, shift1);
+    vNx2short_t out = mli_math_acc_cast_fx<vNx2short_t, vNx2accint_t>(acc, shift2);
 
     out = mli_math_min_fx(out, val_max_limit);
     out = mli_math_max_fx(out, val_min_limit);
@@ -479,7 +493,14 @@ MLI_FORCE_INLINE void result_cast_relu_store_v(
         int num,
         bool add_preshift_rnd) {
 
-    vNx4short_t out = mli_math_acc_cast_fx<vNx4short_t, vNx4accint_t>(acc, quant_params->out_shift);
+    constexpr int max_acc_bits = 39;
+    constexpr int max_int_shift = 31;
+    int max_shift = mli_math_min_fx(quant_params->out_shift, max_acc_bits);
+    int shift1 = mli_math_max_fx(max_shift - max_int_shift, 0);
+    int shift2 = max_shift - shift1;
+
+    acc = mli_math_asr_fx(acc, shift1);
+    vNx4short_t out = mli_math_acc_cast_fx<vNx4short_t, vNx4accint_t>(acc, shift2);
 
     out = mli_math_min_fx(out, val_max_limit);
     out = mli_math_max_fx(out, val_min_limit);
