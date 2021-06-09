@@ -54,26 +54,29 @@ static MLI_FORCE_INLINE acc_T reduce_sum2D_v(
 static MLI_FORCE_INLINE vNx4char_t reduce_sum2D_v(
         const MLI_PTR(int8_t) in,
         const int16_t mul,
-        const int16_t accu_init,
+        const int16_t out_offset,
         const int width,
         const int height,
         const int col_mem_stride,
         const int row_mem_stride,
         int shift_value) {
-
     int row_inc = row_mem_stride - width * col_mem_stride;
-    int16_t round = (1 << shift_value) >> 1;
+    constexpr int max_acc_size = 23;
+    constexpr int max_int16_shift = 15;
+    int max_shift = mli_math_min_fx(shift_value, max_acc_size);
+    int shift1 = mli_math_max_fx(max_shift - max_int16_shift, 0);
+    int shift2 = max_shift - shift1;
 
-    vNx4accshort_t acc_short = mli_math_init_accu<int16_t, vNx4accshort_t>(accu_init);
-                   acc_short = mli_math_asl_fx(acc_short, shift_value);
-                   acc_short = mli_math_add(acc_short, (vNx4short_t)round);
+    vNx4accshort_t acc_short = mli_math_mul_fx<vNx4char_t, vNx4accshort_t>
+                                                  (mli_prv_load_1vec(in), (int8_t)mul);
+    in += col_mem_stride;
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wpass-failed"
 #pragma clang loop unroll(full)
-    for (int row = 0; row < height; row++) {
+    for (int row = 0, clmn = 1; row < height; row++, clmn = 0) {
 #pragma clang loop unroll(full)
-        for (int clmn = 0; clmn < width; clmn++) {
+        for (; clmn < width; clmn++) {
             acc_short = mli_math_mac_fx(acc_short, mli_prv_load_1vec(in), (int8_t)mul);
             in += col_mem_stride;
         }
@@ -81,7 +84,10 @@ static MLI_FORCE_INLINE vNx4char_t reduce_sum2D_v(
     }
 #pragma clang diagnostic pop
 
-    return mli_math_acc_cast_fx<vNx4char_t, vNx4accshort_t,/*round = */ false>(acc_short, shift_value);
+    acc_short = mli_math_asr_fx(acc_short, shift1);
+    vNx4short_t res = mli_math_acc_cast_fx<vNx4short_t, vNx4accshort_t>(acc_short, shift2);
+    res = mli_math_add(res, (vNx4short_t)out_offset);
+    return mli_math_cast_fx<vNx4short_t, vNx4char_t>(res);
 }
 #else
 static MLI_FORCE_INLINE vNx4char_t reduce_sum2D_v(
@@ -134,9 +140,13 @@ static MLI_FORCE_INLINE vNx4char_t reduce_sum2D_v(
 #pragma clang diagnostic pop
 
     shift_value -= (mul_hi_shift - mul_pre_shift - accu_preshift);
+    constexpr int max_right_shift = 15;
+    int shift_right = mli_math_min_fx(mli_math_max_fx(shift_value, 1), max_right_shift);
+    int shift_left = mli_math_min_fx(shift_value - 1, 0);
     vNx4short_t acc_casted = mli_math_acc_cast(acc_short);
+    acc_casted = mli_math_asl_fx(acc_casted, shift_left);
     acc_casted = mli_math_mul_fx_high(acc_casted, (mul << mul_pre_shift));
-    acc_casted = mli_math_asr_rnd_fx(acc_casted, shift_value);
+    acc_casted = mli_math_asr_rnd_fx(acc_casted, shift_right);
     acc_casted = mli_math_add_fx<vNx4short_t>(acc_casted, accu_init);
     return mli_math_cast_fx<vNx4short_t, vNx4char_t>(acc_casted);
 }
