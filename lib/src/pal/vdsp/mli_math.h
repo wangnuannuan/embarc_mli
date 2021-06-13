@@ -17,7 +17,6 @@
 #include "arc_vector_ext.h"
 #include "mli_debug.h"
 
-
 //=========================================================================
 //
 // Definitions
@@ -1427,6 +1426,23 @@ MLI_FORCE_INLINE vNx2short_t mli_math_acc_cast_fx<vNx2short_t, vNx2accint_t,/*ro
     accu_result.hi = to_vNint_t(vvconvert(__vacc_hi(acc), ctrlword));
 
     return to_vNx2short_t(accu_result);
+}
+
+template<>
+MLI_FORCE_INLINE vNx4short_t mli_math_acc_cast_fx<vNx4short_t, vNx4accint_t,/*round = */ false>(
+        vNx4accint_t acc, int shift_right) {
+	MLI_EXTRA_ASSERT(shift_right >= 0);
+
+    int ctrlword = SAT|SIGNED|TARGET_SZ_16|SHIFT(shift_right);
+    vNx4int_t accu_result;
+    accu_result.lo.lo = to_vNint_t(vvconvert(__vacc_lo(acc.lo), ctrlword));
+    accu_result.lo.hi = to_vNint_t(vvconvert(__vacc_hi(acc.lo), ctrlword));
+    accu_result.hi.lo = to_vNint_t(vvconvert(__vacc_lo(acc.hi), ctrlword));
+    accu_result.hi.hi = to_vNint_t(vvconvert(__vacc_hi(acc.hi), ctrlword));
+
+    return to_vNx4short_t(accu_result);
+
+
 }
 
 template<>

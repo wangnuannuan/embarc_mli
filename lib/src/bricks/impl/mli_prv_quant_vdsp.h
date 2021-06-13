@@ -275,6 +275,15 @@ MLI_FORCE_INLINE vNx4accshort_t bias_additive(
     vNx4char_t bias_v = mli_prv_load_nx4_samples(bias);
     vNx4accshort_t accu = mli_math_mul_fx<vNx4char_t, vNx4accshort_t>(bias_v, 1);
     accu = mli_math_asl_fx(accu, quant_params->bias_shift);
+    constexpr int max_acc_bits = 23;
+    constexpr int max_int_shift = 15;
+    int max_shift = mli_math_min_fx(quant_params->out_shift, max_acc_bits);
+    int shift1 = mli_math_max_fx(max_shift - max_int_shift, 0);
+    int shift2 = max_shift - shift1;
+    vNx4accshort_t round =  mli_math_init_accu<int16_t, vNx4accshort_t>((int16_t)((uint16_t)1 << shift2) >> 1);
+    round = mli_math_asl_fx(round, shift1);
+    accu = mli_math_add(accu, round);
+
     return accu;
 }
 
@@ -286,6 +295,14 @@ MLI_FORCE_INLINE vNx2accint_t bias_additive(
     vNx2short_t bias_v = mli_prv_load_nx2_samples(bias);
     vNx2accint_t accu = mli_math_mul_fx<vNx2short_t, vNx2accint_t>(bias_v, 1);
     accu = mli_math_asl_fx(accu, quant_params->bias_shift);
+    constexpr int max_acc_bits = 39;
+    constexpr int max_int_shift = 31;
+    int max_shift = mli_math_min_fx(quant_params->out_shift, max_acc_bits);
+    int shift1 = mli_math_max_fx(max_shift - max_int_shift, 0);
+    int shift2 = max_shift - shift1;
+    vNx2accint_t round =  mli_math_init_accu<int32_t, vNx2accint_t>((int32_t)((uint32_t)1 << shift2) >> 1);
+    round = mli_math_asl_fx(round, shift1);
+    accu = mli_math_add(accu, round);
     return accu;
 }
 
@@ -297,6 +314,14 @@ MLI_FORCE_INLINE vNx4accint_t bias_additive(
     vNx4char_t bias_v = mli_prv_load_nx4_samples(bias);
     vNx4accint_t accu = mli_math_mul_fx<vNx4short_t, vNx4accint_t>(to_vNx4short_t(bias_v), 1);
     accu = mli_math_asl_fx(accu, quant_params->bias_shift);
+    constexpr int max_acc_bits = 39;
+    constexpr int max_int_shift = 31;
+    int max_shift = mli_math_min_fx(quant_params->out_shift, max_acc_bits);
+    int shift1 = mli_math_max_fx(max_shift - max_int_shift, 0);
+    int shift2 = max_shift - shift1;
+    vNx4accint_t round =  mli_math_init_accu<int32_t, vNx4accint_t>((int32_t)((uint32_t)1 << shift2) >> 1);
+    round = mli_math_asl_fx(round, shift1);
+    accu = mli_math_add(accu, round);
     return accu;
 }
 
@@ -450,7 +475,7 @@ MLI_FORCE_INLINE void result_cast_relu_store_v(
     int shift2 = max_shift - shift1;
 
     acc = mli_math_asr_fx(acc, shift1);
-    vNx4char_t out = mli_math_acc_cast_fx<vNx4char_t, vNx4accshort_t>(acc, shift2);
+    vNx4char_t out = mli_math_acc_cast_fx<vNx4char_t, vNx4accshort_t, false>(acc, shift2);
 
     out = mli_math_min_fx(out, val_max_limit);
     out = mli_math_max_fx(out, val_min_limit);
@@ -475,7 +500,7 @@ MLI_FORCE_INLINE void result_cast_relu_store_v(
     int shift2 = max_shift - shift1;
 
     acc = mli_math_asr_fx(acc, shift1);
-    vNx2short_t out = mli_math_acc_cast_fx<vNx2short_t, vNx2accint_t>(acc, shift2);
+    vNx2short_t out = mli_math_acc_cast_fx<vNx2short_t, vNx2accint_t, false>(acc, shift2);
 
     out = mli_math_min_fx(out, val_max_limit);
     out = mli_math_max_fx(out, val_min_limit);
@@ -500,7 +525,7 @@ MLI_FORCE_INLINE void result_cast_relu_store_v(
     int shift2 = max_shift - shift1;
 
     acc = mli_math_asr_fx(acc, shift1);
-    vNx4short_t out = mli_math_acc_cast_fx<vNx4short_t, vNx4accint_t>(acc, shift2);
+    vNx4short_t out = mli_math_acc_cast_fx<vNx4short_t, vNx4accint_t, false>(acc, shift2);
 
     out = mli_math_min_fx(out, val_max_limit);
     out = mli_math_max_fx(out, val_min_limit);
