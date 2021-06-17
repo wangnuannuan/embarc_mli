@@ -32,7 +32,7 @@ $(RUN_TARGETS): run_%: app
 ifndef TCF_FILE
 	$(BUILD_DIR)$(PS)$(BUILD_SUBDIR)$(PS)elf_files$(PS)example_cifar10_caffe $(RUN_ARGS)
 else
-	mdb $(BUILD_DIR)$(PS)$(BUILD_SUBDIR)$(PS)elf_files$(PS)example_cifar10_caffe_$*.elf \
+	mdb64 $(BUILD_DIR)$(PS)$(BUILD_SUBDIR)$(PS)elf_files$(PS)example_cifar10_caffe_$*.elf \
 		-cl  -nsim -cmd=run -off=cr_for_more -cmd=exit -tcf=$(TCF_FILE) -- $(RUN_ARGS)
 endif
 
