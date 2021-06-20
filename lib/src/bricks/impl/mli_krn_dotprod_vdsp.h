@@ -595,10 +595,15 @@ static MLI_FORCE_INLINE grpacc_T dotprod3D_v_pad_gather1_unroll (
         int kern_col_step,
         int kern_row_step,
         int kern_ch_step,
+		int unroll_step,
+		int unroll_1,
+		int required_loads,
+		int kernel_size,
+		int ext_width,
         grpacc_T accu) {
     // construct gather vector with pointers
-    int ext_width = width + unroll - 1;
-    const vNx2int_t vindex = to_vNx2int_t(make_vindex(ext_width, height, in_col_step, in_row_step));
+//    int ext_width = width + unroll - 1;
+    const vNx2int_t vindex = to_vNx2int_t(make_vindex(ext_width, height, in_col_step, in_row_step, unroll_1, unroll_step));
 
     kern_ch_step -= height * kern_row_step;
     kern_row_step -= width * kern_col_step;
@@ -608,7 +613,7 @@ static MLI_FORCE_INLINE grpacc_T dotprod3D_v_pad_gather1_unroll (
 #pragma clang diagnostic ignored "-Wpass-failed"
     for (int ch = 0; ch < channels; ch++) {
         // gather load w x h samples from input
-        auto in_gather = mli_prv_gather_load_nx2_samples(in, vindex, ext_width * height);
+        auto in_gather = mli_prv_gather_load_nx2_samples(in, vindex, required_loads);
 #pragma clang loop unroll(full)
         for (int row = 0; row < height; row++) {
 #pragma clang loop unroll(full)
@@ -617,15 +622,15 @@ static MLI_FORCE_INLINE grpacc_T dotprod3D_v_pad_gather1_unroll (
                 in_T input = in_gather[row * ext_width + clmn];
                 accu.accu0 = mli_prv_mac_load_v_s(accu.accu0, krn, input);
                 if (unroll > 1) {
-                    in_T input = in_gather[row * ext_width + clmn + 1];
+                    in_T input = in_gather[row * ext_width + clmn + 1 * kernel_size];
                     accu.accu1 = mli_prv_mac_load_v_s(accu.accu1, krn, input);
                 }
                 if (unroll > 2) {
-                    in_T input = in_gather[row * ext_width + clmn + 2];
+                    in_T input = in_gather[row * ext_width + clmn + 2 * kernel_size];
                     accu.accu2 = mli_prv_mac_load_v_s(accu.accu2, krn, input);
                 }
                 if (unroll > 3) {
-                    in_T input = in_gather[row * ext_width + clmn + 3];
+                    in_T input = in_gather[row * ext_width + clmn + 3 * kernel_size];
                     accu.accu3 = mli_prv_mac_load_v_s(accu.accu3, krn, input);
                 }
                 krn += kern_col_step;
@@ -728,6 +733,11 @@ static MLI_FORCE_INLINE grpacc_T dotprod3D_v_unroll (
         int kern_col_step,
         int kern_row_step,
         int kern_ch_step,
+		int unroll_step,
+		int unroll_1,
+		int required_loads,
+		int kernel_size,
+		int ext_width,
         grpacc_T accu) {
 /* Optimized version will use a gather load to combine the scalar loads.
    the number of loads required depends on the kernel width, height and unroll factor.
@@ -736,11 +746,11 @@ static MLI_FORCE_INLINE grpacc_T dotprod3D_v_unroll (
    gather instruction is the same.
    */
     int num_loads_single_gather = _VDSP_NUM_16BIT_LANES;
-    int required_loads = (width + unroll - 1) * height;
+//    int required_loads = (width + unroll - 1) * height;
     MLI_ASSERT(in_unroll_step == in_col_step);
 
     if (required_loads <= num_loads_single_gather) {
-        return dotprod3D_v_pad_gather1_unroll<in_T, w_T, grpacc_T, unroll>(in, krn, width, height, channels, in_col_step, in_row_step, in_ch_step, kern_col_step, kern_row_step, kern_ch_step, accu);
+        return dotprod3D_v_pad_gather1_unroll<in_T, w_T, grpacc_T, unroll>(in, krn, width, height, channels, in_col_step, in_row_step, in_ch_step, kern_col_step, kern_row_step, kern_ch_step, unroll_step, unroll_1, required_loads, kernel_size, ext_width, accu);
     } else if (fixed_size && (required_loads <= 2 * num_loads_single_gather)) {
         return dotprod3D_v_pad_gather2_unroll<in_T, w_T, grpacc_T, unroll>(in, krn, width, height, channels, in_col_step, in_row_step, in_ch_step, kern_col_step, kern_row_step, kern_ch_step, accu);
     } else {
