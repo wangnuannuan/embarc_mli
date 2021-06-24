@@ -583,7 +583,7 @@ static MLI_FORCE_INLINE acc_T dotprod3D_v (
     }
 }
 
-template < typename in_T, typename w_T, typename grpacc_T, int unroll >
+template < typename in_T, typename w_T, bool overlapped_in, typename grpacc_T, int unroll >
 static MLI_FORCE_INLINE grpacc_T dotprod3D_v_pad_gather1_unroll (
         const MLI_PTR (in_T) __restrict in,
         const MLI_PTR (w_T) __restrict krn,
@@ -593,15 +593,24 @@ static MLI_FORCE_INLINE grpacc_T dotprod3D_v_pad_gather1_unroll (
         int in_col_step,
         int in_row_step,
         int in_ch_step,
+        int in_unroll_step,
         int kern_col_step,
         int kern_row_step,
         int kern_ch_step,
-        int unroll_step,
-        int unroll_1,
-        int required_loads,
-        int kernel_size,
-        int ext_width,
         grpacc_T accu) {
+
+    int ext_width = width + unroll - 1;
+    int required_loads = ext_width * height;
+    int unroll_step = 0;
+    int unroll_1 = 1;
+    int kernel_size = 1;
+    if (!overlapped_in) {
+        ext_width = width;
+        required_loads = width * height * unroll;
+        unroll_step = in_unroll_step;
+        unroll_1 = unroll;
+        kernel_size = width * height;
+    }
     // construct gather vector with pointers
     const vNx2int_t vindex = to_vNx2int_t(make_vindex(ext_width, height, in_col_step, in_row_step, unroll_1, unroll_step));
 
@@ -655,7 +664,7 @@ vector is stalling until the complete vector is loaded.
 so there is some benefit in loading second half in a different vector.
 
 */
-template < typename in_T, typename w_T, typename grpacc_T, int unroll >
+template < typename in_T, typename w_T, bool overlapped_in, typename grpacc_T, int unroll >
 static MLI_FORCE_INLINE grpacc_T dotprod3D_v_pad_gather2_unroll (
         const MLI_PTR (in_T) __restrict in,
         const MLI_PTR (w_T) __restrict krn,
@@ -665,15 +674,24 @@ static MLI_FORCE_INLINE grpacc_T dotprod3D_v_pad_gather2_unroll (
         int in_col_step,
         int in_row_step,
         int in_ch_step,
+        int in_unroll_step,
         int kern_col_step,
         int kern_row_step,
         int kern_ch_step,
-        int unroll_step,
-        int unroll_1,
-        int required_loads,
-        int kernel_size,
-        int ext_width,
         grpacc_T accu) {
+
+    int ext_width = width + unroll - 1;
+    int required_loads = ext_width * height;
+    int unroll_step = 0;
+    int unroll_1 = 1;
+    int kernel_size = 1;
+    if (!overlapped_in) {
+        ext_width = width;
+        required_loads = width * height * unroll;
+        unroll_step = in_unroll_step;
+        unroll_1 = unroll;
+        kernel_size = width * height;
+    }
     // construct gather vector with pointers
     const vNx4int_t vindex = to_vNx4int_t(make_vindex2(ext_width, height, in_col_step, in_row_step, unroll_1, unroll_step));
     int vec_length = (sizeof(vNx2short_t) / sizeof(short));
@@ -688,7 +706,7 @@ static MLI_FORCE_INLINE grpacc_T dotprod3D_v_pad_gather2_unroll (
         // gather load w x h samples from input
         auto in_gather_lo = mli_prv_gather_load_nx2_samples(in, vindex.lo, vec_length);
         auto in_gather_hi = mli_prv_gather_load_nx2_samples(in, vindex.hi, required_loads - vec_length);
-//#pragma clang loop unroll(full)
+#pragma clang loop unroll(full)
         for (int row = 0; row < height; row++) {
 #pragma clang loop unroll(full)
             for (int clmn = 0; clmn < width; clmn++) {
@@ -723,7 +741,7 @@ static MLI_FORCE_INLINE grpacc_T dotprod3D_v_pad_gather2_unroll (
     return accu;
 }
 
-template <int unroll, bool fixed_size, typename in_T, typename w_T, typename grpacc_T >
+template <int unroll, bool fixed_size, bool overlapped_in, typename in_T, typename w_T, typename grpacc_T >
 static MLI_FORCE_INLINE grpacc_T dotprod3D_v_unroll (
         const MLI_PTR (in_T) __restrict in,
         const MLI_PTR (w_T) __restrict krn,
@@ -737,11 +755,6 @@ static MLI_FORCE_INLINE grpacc_T dotprod3D_v_unroll (
         int kern_col_step,
         int kern_row_step,
         int kern_ch_step,
-        int unroll_step,
-        int unroll_1,
-        int required_loads,
-        int kernel_size,
-        int ext_width,
         grpacc_T accu) {
 /* Optimized version will use a gather load to combine the scalar loads.
    the number of loads required depends on the kernel width, height and unroll factor.
@@ -750,13 +763,14 @@ static MLI_FORCE_INLINE grpacc_T dotprod3D_v_unroll (
    gather instruction is the same.
    */
     int num_loads_single_gather = _VDSP_NUM_16BIT_LANES;
+    int required_loads = overlapped_in ? ((width + unroll - 1) * height) : (width * unroll * height);
 
     if (required_loads <= num_loads_single_gather) {
-        return dotprod3D_v_pad_gather1_unroll<in_T, w_T, grpacc_T, unroll>(in, krn, width, height, channels, in_col_step, in_row_step, in_ch_step,
-                kern_col_step, kern_row_step, kern_ch_step, unroll_step, unroll_1, required_loads, kernel_size, ext_width, accu);
+        return dotprod3D_v_pad_gather1_unroll<in_T, w_T, overlapped_in, grpacc_T, unroll>(in, krn, width, height, channels, in_col_step, in_row_step, in_ch_step,
+                in_unroll_step, kern_col_step, kern_row_step, kern_ch_step, accu);
     } else if (fixed_size && (required_loads <= 2 * num_loads_single_gather)) {
-        return dotprod3D_v_pad_gather2_unroll<in_T, w_T, grpacc_T, unroll>(in, krn, width, height, channels, in_col_step, in_row_step, in_ch_step,
-                kern_col_step, kern_row_step, kern_ch_step, unroll_step, unroll_1, required_loads, kernel_size, ext_width, accu);
+        return dotprod3D_v_pad_gather2_unroll<in_T, w_T, overlapped_in, grpacc_T, unroll>(in, krn, width, height, channels, in_col_step, in_row_step, in_ch_step,
+                in_unroll_step, kern_col_step, kern_row_step, kern_ch_step, accu);
     } else {
         grpacc_T r;
         r.accu0 = dotprod3D_v_pad(in, krn, width, height, channels, in_col_step, in_row_step, in_ch_step, kern_col_step, kern_row_step, kern_ch_step, accu.accu0);

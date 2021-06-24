@@ -295,7 +295,7 @@ static MLI_FORCE_INLINE acc_T dotprod3D_v (
         int kern_ch_step,
         acc_T accu);
 
-template <int unroll, bool fixed_size, typename in_T, typename w_T, typename grpacc_T >
+template <int unroll, bool fixed_size, bool overlapped_in, typename in_T, typename w_T, typename grpacc_T >
 static MLI_FORCE_INLINE grpacc_T dotprod3D_v_unroll (
         const MLI_PTR (in_T) __restrict in,
         const MLI_PTR (w_T) __restrict krn,
@@ -309,11 +309,6 @@ static MLI_FORCE_INLINE grpacc_T dotprod3D_v_unroll (
         int kern_col_step,
         int kern_row_step,
         int kern_ch_step,
-		int unroll_step,
-		int unroll_1,
-		int required_loads,
-		int kernel_size,
-		int ext_width,
         grpacc_T accu);
 
 template < typename in_T, typename w_T, typename acc_T >

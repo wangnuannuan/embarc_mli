@@ -128,26 +128,14 @@ MLI_FORCE_INLINE void convolution2D_nopad(
                 } else if ((fix_kernel_width > 0) && (fix_kernel_height > 0)) {
                     // unrolled version with fixed kernelsize
                     if (dilation_width == stride_width) {
-                        int ext_width = clmns + unroll - 1;
-                        int required_loads = ext_width * rows;
-                        int unroll_step = 0;
-                        int unroll_1 = 1;
-                        int kernel_size = 1;
-                        accu = mli::krn::dotprod3D_v_unroll<unroll, true>(in_ptr, w_ptr, clmns, rows, in.ch,
+                        accu = mli::krn::dotprod3D_v_unroll<unroll, true /*fixed_size*/, true /*overlapped_in*/>(in_ptr, w_ptr, clmns, rows, in.ch,
                                   in.col_mem_stride * dilation_width, in.row_mem_stride * dilation_height, in.ch_mem_stride, in_w_inc,
                                   weights.col_mem_stride, weights.row_mem_stride, weights.in_ch_mem_stride,
-                                  unroll_step, unroll_1, required_loads, kernel_size, ext_width,
                                   accu);
                     } else {
-                        int ext_width = clmns;
-                        int required_loads = clmns * rows * unroll;
-                        int unroll_step = in_w_inc;
-                        int unroll_1 = unroll;
-                        int kernel_size = clmns * rows;
-                        accu = mli::krn::dotprod3D_v_unroll<unroll, true>(in_ptr, w_ptr, clmns, rows, in.ch,
+                        accu = mli::krn::dotprod3D_v_unroll<unroll, true/*fixed_size*/, false /*overlapped_in*/>(in_ptr, w_ptr, clmns, rows, in.ch,
                                   in.col_mem_stride * dilation_width, in.row_mem_stride * dilation_height, in.ch_mem_stride, in_w_inc,
                                   weights.col_mem_stride, weights.row_mem_stride, weights.in_ch_mem_stride,
-                                  unroll_step, unroll_1, required_loads, kernel_size, ext_width,
                                   accu);
                     }
                 } else if (weights.row_mem_stride == clmns * weights.col_mem_stride) {
@@ -156,15 +144,9 @@ MLI_FORCE_INLINE void convolution2D_nopad(
                               weights.col_mem_stride, weights.row_mem_stride, weights.in_ch_mem_stride, in_w_inc,
                               accu);
                 } else {
-                    int ext_width = clmns;
-                    int required_loads = clmns * rows * unroll;
-                    int unroll_step = in_w_inc;
-                    int unroll_1 = unroll;
-                    int kernel_size = clmns * rows;
-                    accu = mli::krn::dotprod3D_v_unroll<unroll, false>(in_ptr, w_ptr, clmns, rows, in.ch,
+                    accu = mli::krn::dotprod3D_v_unroll<unroll, false/*fixed_size*/, false /*overlapped_in*/>(in_ptr, w_ptr, clmns, rows, in.ch,
                               in.col_mem_stride * dilation_width, in.row_mem_stride * dilation_height, in.ch_mem_stride, in_w_inc,
                               weights.col_mem_stride, weights.row_mem_stride, weights.in_ch_mem_stride,
-                              unroll_step, unroll_1, required_loads, kernel_size, ext_width,
                               accu);
                 }
                 // Cast result to output type, apply built-in ReLU Applying and write result
