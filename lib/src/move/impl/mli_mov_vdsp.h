@@ -343,19 +343,29 @@ static MLI_FORCE_INLINE void mov_inner_loop (mli_mov_handle_t* h, const io_T* __
         fill_inner_dimension_by_zeros<io_T>(dst, inner_dst_size, inner_dst_strde,
                 dst_in_vccm, no_inner_dst_stride);
     } else {
-        int inner_dst_pos =  inner_dst_offset * inner_dst_strde;
+        int inner_dst_pos = inner_dst_offset * inner_dst_strde;
         int inner_src_pos = inner_src_offset - inner_pre_padding;
         uint32_t pre_padding_size = 0;
         //check if there will be pre_padding in inner dimension
-        if(inner_src_pos < 0) {
+        if (inner_src_pos < 0) {
             pre_padding_size += CEIL_DIV(-inner_src_pos, inner_subsample);
+            // prevent out of bounds write in case padding is larger than required
+            if ((inner_dst_offset + pre_padding_size) > inner_dst_size) {
+                pre_padding_size = inner_dst_size - inner_dst_offset;
+            }
             fill_inner_dimension_by_zeros<io_T>(&dst[inner_dst_pos], pre_padding_size, inner_dst_strde,
                     dst_in_vccm, no_inner_dst_stride);
             inner_src_pos += pre_padding_size * inner_subsample;
             inner_dst_pos += pre_padding_size * inner_dst_strde;
         }
 
-        uint32_t size_of_copy = CEIL_DIV((inner_src_size + inner_src_offset - inner_src_pos), inner_subsample);
+        int size_of_copy = CEIL_DIV((int)inner_src_size
+                                    + (int)inner_src_offset
+                                    - inner_src_pos
+                                    - inner_pre_padding
+                                    - inner_post_padding, inner_subsample);
+
+        size_of_copy = MAX(size_of_copy, 0);
         inner_src_pos *= inner_src_strde;
         uint32_t inner_src_step = inner_src_strde * inner_subsample;
         mli::mov::mli_mov_memcpy<io_T>(h, &src[inner_src_pos], &dst[inner_dst_pos], size_of_copy, inner_dst_strde,
