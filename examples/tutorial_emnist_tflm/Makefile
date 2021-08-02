@@ -34,7 +34,7 @@ OUT_DIR      ?= ./bin
 BUILD_DIR    ?= ./obj
 OUT_NAME     ?= example_emnist_letter_recognition
 
-CFLAGS = -DTF_LITE_STATIC_MEMORY -tcf_core_config -Hnocopyr -Hpurge -Hdense_prologue -Hon=Long_enums -fslp-vectorize-aggressive -ffunction-sections -fdata-sections -Hcl -Hcrt_fast_memcpy -Hcrt_fast_memset -Hheap=2K -Hstack=5K 
+CFLAGS = -DTF_LITE_STATIC_MEMORY -tcf_core_config -Hnocopyr -Hpurge -Hdense_prologue -Hon=Long_enums -fslp-vectorize-aggressive -ffunction-sections -fdata-sections -Hcrt_fast_memcpy -Hcrt_fast_memset -Hheap=2K -Hstack=5K 
 
 DBG_OPTS = -jit 
 

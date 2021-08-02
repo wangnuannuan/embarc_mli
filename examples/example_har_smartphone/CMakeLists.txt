@@ -26,7 +26,7 @@ set(EXAMPLE_FLAGS
     -Hldopt=-q
     -Hsdata0
     -Hdense_prologue
-    -Hcl
+#    -Hcl
     -Hcrt_argv
     -Hcrt_fast_memcpy
     -Hcrt_fast_memset
